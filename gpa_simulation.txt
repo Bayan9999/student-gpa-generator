@@ -1,0 +1,6 @@
+
+** GPA Simulation for Bayan idowu (230591226) **
+Current GPA: 4.56
+ - Future Course: csc112 | Unit: 2 | Expected Grade: 5 (A)
+ - Future Course: csc 222 | Unit: 2 | Expected Grade: 4 (B)
+Projected GPA: 4.54 (First Class)

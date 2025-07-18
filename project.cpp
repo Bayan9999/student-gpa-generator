@@ -1,8 +1,15 @@
-// trying with multiple students
-// the highest gpa will bw 5 while the lowest will be 0
-// 5 will be A wile 0 will be F
-// im using 4 prnciples of oop(Encapsulation, Abstraction, Inheritance, Polymorphism)
- 
+// i'll be including comments in the code to explain each part
+// project.cpp - GPA Simulation Project using C++ OOP
+// so as to make reading the code easier
+// we r using four functions of oop
+// 1. Inheritance
+// 2. Polymorphism
+// 3. Encapsulation
+// 4. Abstraction   
+
+
+
+
 
 #include <iostream>
 #include <vector>
@@ -11,6 +18,8 @@
 #include <fstream>
 #include <memory>
 #include <limits>
+#include <cstdlib> // For rand() and srand()
+#include <ctime>   // For time()
 
 // Base class representing a person
 class Person {
@@ -40,7 +49,6 @@ private:
     std::string department; // Department (e.g., Computer Science)
     std::vector<Course> courses; // List of courses taken by the student
 
-    // Private method to get grade points based on the grade
     int getGradePoint(int grade) {
         if (grade < 0 || grade > 5) {
             std::cout << "Invalid grade entered. Counting as 0.\n";          
@@ -58,6 +66,27 @@ private:
         else return "Pass";        
     }
 
+    // NEW: Automatically calculate performance factor (0.7-1.3)
+    double getPerformanceFactor() {
+        double gpa = calculateGPA();
+        
+        if (gpa >= 4.5) return 0.92; // Small dip for top students
+        else if (gpa >= 3.5) return 1.05; // Slight improvement
+        else if (gpa >= 2.0) return 1.12; // Moderate improvement
+        else return 1.25; // Big improvement for struggling students
+    }
+
+    // NEW: Simulate Grade Change (+/- 20% variation)
+    int simulateGradeChange(int currentGrade) {
+        int newGrade = currentGrade;
+        
+        int roll = rand() % 100;
+        if (roll < 15 && newGrade < 5) newGrade++;
+        else if (roll > 85 && newGrade > 0) newGrade--;
+        
+        return newGrade;
+    }
+
 public: 
     // Constructor to initialize student details
     Student(std::string n, std::string id, std::string lvl, std::string sem, std::string dept) 
@@ -72,13 +101,13 @@ public:
             case 2: return "D";
             case 1: return "E";
             case 0: return "F";
-            default: return "Invalid"; // Return "Invalid" for out-of-range grades
+            default: return "Invalid"; 
         }
     }
 
     // Method to add a course to the student's list
     void addCourse(std::string title, int unit, int grade) {
-        courses.push_back({title, unit, grade}); // Add course to the vector
+        courses.push_back({title, unit, grade}); 
     }
 
     // Method to calculate the GPA based on courses taken
@@ -91,20 +120,57 @@ public:
         return totalUnits ? (double)totalPoints / totalUnits : 0.0; // Return GPA
     }
 
+    // NEW: Automatic GPA Projection
+    void projectNextSemester() {
+        double currentGPA = calculateGPA();
+        double performanceFactor = getPerformanceFactor();
+        double projectedGPA = currentGPA * performanceFactor;
+
+        // Ensure GPA stays within bounds (0.0-5.0)
+        if (projectedGPA > 5.0) projectedGPA = 5.0;
+        if (projectedGPA < 0.0) projectedGPA = 0.0;
+
+        // Detailed simulation log
+        std::cout << "\n--- Next Semester Projection ---" << std::endl;
+        std::cout << "Current GPA: " << std::fixed << std::setprecision(2) << currentGPA << std::endl;
+        std::cout << "Performance Factor: " << performanceFactor << std::endl;
+        std::cout << "Projected GPA: " << projectedGPA << std::endl;
+        
+        // Course-by-course simulation
+        std::cout << "\nCourse Adjustments:" << std::endl;
+        for (auto& course : courses) {
+            int oldGrade = course.grade;
+            int newGrade = simulateGradeChange(oldGrade);
+            std::cout << course.title << ": " << gradeToLetter(oldGrade) 
+                      << " -> " << gradeToLetter(newGrade) << std::endl;
+        }
+
+        // Write to simulation file
+        std::ofstream simFile("gpa_projection.txt", std::ios::app);
+        simFile << name << "'s Projection:\n";
+        simFile << "Current: " << currentGPA << " -> Projected: " << projectedGPA << "\n";
+    }
+
     // Override the printDetails method to display student information
     void printDetails() override {
         double gpa = calculateGPA(); // Calculate GPA
         std::cout << "\nGPA Report for " << name << " (" << studentID << "):\n";
-        std::cout << "Level: " << level << "\n"; // Display level
-        std::cout << "Semester: " << semester << "\n"; // Display semester
-        std::cout << "Department: " << department << "\n"; // Display department
-        std::cout << "Courses: " << courses.size() << "\n"; // Display number of courses
-        std::cout << "GPA: " << std::fixed << std::setprecision(2) << gpa << "\n"; // Display GPA
-        std::cout << "Classification: " << classify(gpa) << "\n"; // Display classification
+        std::cout << "Level: " << level << "\n";
+        std::cout << "Semester: " << semester << "\n";
+        std::cout << "Department: " << department << "\n";
+        
+        std::cout << "\nCourses:\n";
+        for (const auto& c : courses) {
+            std::cout << " - " << c.title << " | Unit: " << c.unit << " | Grade: " 
+                     << c.grade << " (" << gradeToLetter(c.grade) << ")\n";
+        }
+        
+        std::cout << "\nGPA: " << std::fixed << std::setprecision(2) << gpa << "\n";
+        std::cout << "Classification: " << classify(gpa) << "\n";
 
         // Write GPA report to a file
         std::ofstream out("gpa_report.txt", std::ios::app);
-        out << "Student: " << name << " (" << studentID << ")\n";
+        out << "\nStudent: " << name << " (" << studentID << ")\n";
         out << "Level: " << level << "\n";
         out << "Semester: " << semester << "\n";
         out << "Department: " << department << "\n";
@@ -113,11 +179,13 @@ public:
                 << c.grade << " (" << gradeToLetter(c.grade) << ")\n";
         }
         out << "GPA: " << std::fixed << std::setprecision(2) << gpa
-            << " - " << classify(gpa) << "\n\n";
+            << " - " << classify(gpa) << "\n";
     }
 };
 
 int main() {
+    srand(time(0)); // NEW: Seed random number generator
+
     int n; // Number of students
     std::cout << "GPA Simulation with OOP\n"; // Program title
     std::cout << "Enter number of students: ";
@@ -128,13 +196,12 @@ int main() {
 
     // Loop to input details for each student
     for (int i = 0; i < n; ++i) {
-        std::string name, id, level, semester, department; // Variables to hold student details
-        std::cout << "\nEnter student name: "; // Prompt for student name
-        std::getline(std::cin, name); // Read student name
-        std::cout << "Enter student ID: "; // Prompt for student ID
-        std::getline(std::cin, id); // Read student ID
+        std::string name, id, level, semester, department;
+        std::cout << "\nEnter student name: ";
+        std::getline(std::cin, name);
+        std::cout << "Enter student ID: ";
+        std::getline(std::cin, id);
         
-        // Prompt for additional student details
         std::cout << "Enter student level (e.g., 100, 200, 300, 400): ";
         std::getline(std::cin, level);
         
@@ -147,54 +214,55 @@ int main() {
         // Create a new Student object and add it to the list
         auto student = std::make_unique<Student>(name, id, level, semester, department);
 
-        int courseCount; // Number of courses
-        std::cout << "Enter number of courses: "; // Prompt for number of courses
-        std::cin >> courseCount; // Read number of courses
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Clear input buffer
+        int courseCount;
+        std::cout << "Enter number of courses: ";
+        std::cin >> courseCount;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         
-        // Loop to input details for each course
         for (int j = 0; j < courseCount; ++j) {
-            std::string title; // Course title
-            int unit; // Course unit
-            int grade; // Course grade
+            std::string title;
+            int unit, grade;
 
-            std::cout << "\nCourse name: "; // Prompt for course name
-            std::getline(std::cin, title); // Read course name
+            std::cout << "\nCourse " << (j + 1) << " name: ";
+            std::getline(std::cin, title);
 
-            std::cout << "Unit: "; // Prompt for course unit
-            std::cin >> unit; // Read course unit
+            std::cout << "Unit: ";
+            std::cin >> unit;
             if (unit <= 0) {
                 std::cout << "Invalid unit entered. Counting as 2.\n";
-                unit = 2; // Default to 2 if invalid
+                unit = 2;
             }
 
-            std::cout << "Enter grade (0 = F, ....., 5 = A): "; // Prompt for grade
-            std::cin >> grade; // Read grade
+            std::cout << "Enter grade (0 = F, ....., 5 = A): ";
+            std::cin >> grade;
 
             if (grade < 0 || grade > 5) {
                 std::cout << "Invalid grade entered. Counting as 0.\n";
-                grade = 0; // Default to 0 if invalid
+                grade = 0;
             }
             std::cout << "You entered: " << grade << " (" << student->gradeToLetter(grade) << ")\n";
 
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Clear input buffer
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-            student->addCourse(title, unit, grade); // Add course to student
+            student->addCourse(title, unit, grade);
         }
 
-        studentList.push_back(std::move(student)); // Add student to the list
+        studentList.push_back(std::move(student));
     }
 
-    // Loop to print details for each student
+    // Loop to print details and simulate future GPA for each student
     for (const auto& s : studentList) {
-        s->printDetails(); // Print student details
-        std::cout << "----------------------\n";
+        s->printDetails();
+        s->projectNextSemester(); // NEW: Call the projection function
+        std::cout << "\n----------------------\n";
     }
+
     std::cout << "\nGPA simulation complete.\n";
-    std::cout << "GPA report saved to gpa_report.txt\n";
+    std::cout << "Current GPA report saved to gpa_report.txt\n";
+    std::cout << "Future GPA projections saved to gpa_projection.txt\n";
 
     std::cout << "\nPress Enter to exit...";
-    std::cin.ignore(); // Wait for user input before exiting
+    std::cin.ignore();
 
-    return 0; // End of program
+    return 0;
 }
